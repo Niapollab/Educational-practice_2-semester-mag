@@ -1,0 +1,3 @@
+gym~=0.15.3
+gym-backgammon ~= 0.0.1
+torch~=1.2.0

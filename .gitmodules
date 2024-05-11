@@ -1,0 +1,3 @@
+[submodule "gym-backgammon"]
+	path = gym-backgammon
+	url = https://github.com/dellalibera/gym-backgammon
