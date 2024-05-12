@@ -77,10 +77,10 @@ def main() -> None:
         else TDGammonCNN(lr=args.lr, seed=args.seed)
     )
 
-    env = (
-        gym.make("gym_backgammon:backgammon-v0")
+    env = gym.make(
+        "gym_backgammon:backgammon-v0"
         if is_nn_model
-        else gym.make("gym_backgammon:backgammon-pixel-v0")
+        else "gym_backgammon:backgammon-pixel-v0"
     )
 
     if args.model:
