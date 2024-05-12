@@ -63,7 +63,7 @@ def main() -> None:
 
     is_nn_model = args.type == "nn"
     need_eligibility = is_nn_model
-    need_optimizer = not is_nn_model
+    optimizer = None if is_nn_model else True
 
     ai = (
         TDGammon(
@@ -87,7 +87,7 @@ def main() -> None:
         ensure_exists(args.model)
         ai.load(
             checkpoint_path=args.model,
-            optimizer=need_optimizer,
+            optimizer=optimizer,
             eligibility_traces=need_eligibility,
         )
 
@@ -111,7 +111,7 @@ def main() -> None:
             restored_model=args.model,
             seed=args.seed,
             eligibility=need_eligibility,
-            optimizer=need_optimizer,
+            optimizer=optimizer,
             modules=[module for module in ai.modules()],
         )
 
