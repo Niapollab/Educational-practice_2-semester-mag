@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from .models import BaseResponse, Request, GameState, Response
-from .state_repositories import DictStateRepository
+from .state_repositories import RedisStateRepository, DictStateRepository
 from edupra_core.agents import TDAgent, HumanAgent
 from edupra_core.models import TDGammon, TDGammonCNN
 from edupra_core.path import ensure_exists
@@ -32,8 +32,13 @@ ai.load(
 )
 
 
+redis_url = os.environ.get("REDIS_URL")
+state_repository = (
+    RedisStateRepository(redis_url) if redis_url else DictStateRepository()
+)
+
+
 app = Flask(__name__)
-state_repository = DictStateRepository()
 
 
 def init_state() -> GameState:
