@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import logging
 from .models import BaseResponse, Request, GameState, Response
 from .state_repositories import RedisStateRepository, DictStateRepository
 from edupra_core.agents import TDAgent, HumanAgent
@@ -11,10 +12,7 @@ import gym
 import os
 
 
-model_path = os.environ.get("MODEL_PATH")
-if not model_path:
-    raise ValueError("MODEL_PATH environment variable must be set.")
-ensure_exists(model_path)
+logger = logging.getLogger(__name__)
 
 
 hidden_units = int(os.environ.get("MODEL_HIDDEN_UNITS", "40"))
@@ -25,11 +23,18 @@ ai = (
     if is_nn_model
     else TDGammonCNN(lr=0.0001)
 )
-ai.load(
-    checkpoint_path=model_path,
-    optimizer=None,
-    eligibility_traces=False,
-)
+
+
+model_path = os.environ.get("MODEL_PATH")
+if model_path:
+    ensure_exists(model_path)
+    ai.load(
+        checkpoint_path=model_path,
+        optimizer=None,
+        eligibility_traces=False,
+    )
+else:
+    logger.warning("MODEL_PATH isn't set. Default model will be used.")
 
 
 redis_url = os.environ.get("REDIS_URL")

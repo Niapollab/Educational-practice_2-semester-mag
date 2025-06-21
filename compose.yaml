@@ -25,7 +25,8 @@ services:
       edupra-network:
         ipv4_address: 172.20.0.3
     environment:
-      - MODEL_PATH=/models/1/1_20240512_1416_52_764016_1.tar
+      # Set MODEL_PATH here for example:
+      # - MODEL_PATH=/models/1/1_20240512_1416_52_764016_1.tar
       - REDIS_URL=redis://172.20.0.4:6379/0
 
   redis:
