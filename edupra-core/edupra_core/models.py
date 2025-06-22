@@ -205,6 +205,13 @@ class BaseModel(nn.Module):
 
         env.close()
 
+    def compare_with(self, env, n_episodes, other = None):
+        agents_to_evaluate = {
+            WHITE: TDAgent(WHITE, net=self),
+            BLACK: TDAgent(BLACK, net=other) if other else RandomAgent(BLACK),
+        }
+        return evaluate_agents(agents_to_evaluate, env, n_episodes)
+
 
 class TDGammonCNN(BaseModel):
     def __init__(self, lr, seed=123, output_units=1):

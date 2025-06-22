@@ -43,13 +43,13 @@ class RedisStateRepository(StateRepository):
         self._client = Redis.from_url(url)
 
     def __getitem__(self, uid: str) -> GameState:
-        return loads(self._client.get(uid))  # type: ignore
+        return loads(self._client.get(uid))
 
     def __setitem__(self, uid: str, state: GameState) -> None:
         self._client.setex(uid, timedelta(hours=6), dumps(state))
 
     def __contains__(self, uid: str) -> bool:
-        return self._client.exists(uid)  # type: ignore
+        return self._client.exists(uid)
 
     def __enter__(self) -> 'RedisStateRepository':
         return self
