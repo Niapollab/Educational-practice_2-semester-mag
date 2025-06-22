@@ -1,2 +1,6 @@
-flask~=2.0.3
+fastapi==0.68.2
+uvicorn==0.15.0
 requests~=2.22.0
+python-multipart==0.0.5
+itsdangerous==2.0.1
+aiofiles==0.8.0

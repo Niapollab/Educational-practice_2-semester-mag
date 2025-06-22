@@ -5,11 +5,12 @@ from .state_repositories import RedisStateRepository, DictStateRepository
 from edupra_core.agents import TDAgent, HumanAgent
 from edupra_core.models import TDGammon, TDGammonCNN
 from edupra_core.path import ensure_exists
-from flask import Flask, request
+from fastapi import FastAPI, Header, HTTPException
 from gym_backgammon.envs.backgammon import WHITE, BLACK, COLORS
-from typing import Any
+from typing import Any, Optional
 import gym
 import os
+import uvicorn
 
 
 logger = logging.getLogger(__name__)
@@ -43,7 +44,7 @@ state_repository = (
 )
 
 
-app = Flask(__name__)
+app = FastAPI()
 
 
 def init_state() -> GameState:
@@ -244,28 +245,27 @@ def handle_move(uid: str, command: str) -> Response:
     return Response(message=message, state=state.env.game.state, actions=list(commands))
 
 
-@app.route("/", methods=["POST"])
-def make_turn() -> Any:
-    if "UID" not in request.headers:
-        return BaseResponse(message="UID header must be provided.").dict(), 400
+@app.post("/")
+async def make_turn(request_data: Request, uid: Optional[str] = Header(None)) -> Any:
+    if uid is None:
+        raise HTTPException(status_code=400, detail="UID header must be provided.")
 
-    uid = request.headers["UID"]
-    command = Request(**request.json).command
+    command = request_data.command
 
     if command == "start" or command == "new game":
-        return handle_start(uid).dict()
+        return handle_start(uid)
 
     if command == "roll":
-        return handle_roll(uid).dict()
+        return handle_roll(uid)
 
     if "move" in command:
-        return handle_move(uid, command).dict()
+        return handle_move(uid, command)
 
-    return BaseResponse(message=f'Unknown operation "{command}').dict(), 400
+    raise HTTPException(status_code=400, detail=f'Unknown operation "{command}')
 
 
 def main() -> None:
-    app.run(host="0.0.0.0", port=7314)
+    uvicorn.run(app, host="0.0.0.0", port=7314)
 
 
 if __name__ == "__main__":
