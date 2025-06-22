@@ -1,22 +1,19 @@
 #!/usr/bin/env python3
-from datetime import timedelta
-from typing import Any, Dict
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import FileResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
-from itsdangerous import URLSafeSerializer
-from uuid import uuid4
 import os
+from typing import Any, Dict
+from uuid import uuid4
+
 import requests
 import uvicorn
-
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from itsdangerous import URLSafeSerializer
 
 model_endpoint = os.environ.get("MODEL_ENDPOINT")
 if not model_endpoint:
     raise ValueError("MODEL_ENDPOINT environment variable must be set.")
-
-
-from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 secret_key = os.urandom(64).hex()

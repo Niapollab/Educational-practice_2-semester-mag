@@ -171,5 +171,5 @@ def evaluate_agents(agents, env, n_episodes):
             agent_color = env.get_opponent_agent()
             agent = agents[agent_color]
 
-            observation = observation_next
+            _ = observation_next
     return wins

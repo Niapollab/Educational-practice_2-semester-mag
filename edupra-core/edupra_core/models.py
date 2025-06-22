@@ -146,7 +146,7 @@ class BaseModel(nn.Module):
                     steps += i
                     break
                 else:
-                    loss = self.update_weights(p, p_next)
+                    _ = self.update_weights(p, p_next)
 
                 agent_color = env.get_opponent_agent()
                 agent = agents[agent_color]
@@ -211,66 +211,6 @@ class BaseModel(nn.Module):
             BLACK: TDAgent(BLACK, net=other) if other else RandomAgent(BLACK),
         }
         return evaluate_agents(agents_to_evaluate, env, n_episodes)
-
-
-class TDGammonCNN(BaseModel):
-    def __init__(self, lr, seed=123, output_units=1):
-        super(TDGammonCNN, self).__init__(lr, seed=seed, lamda=0.7)
-
-        self.loss_fn = torch.nn.MSELoss(reduction="sum")
-
-        self.conv1 = nn.Sequential(
-            nn.Conv2d(in_channels=1, out_channels=32, kernel_size=8, stride=4),
-            nn.BatchNorm2d(32),
-            nn.ReLU(),
-        )
-
-        self.conv2 = nn.Sequential(
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
-            nn.BatchNorm2d(64),
-            nn.ReLU(),
-        )
-
-        self.conv3 = nn.Sequential(
-            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
-            nn.BatchNorm2d(64),
-            nn.ReLU(),
-        )
-
-        self.hidden = nn.Sequential(nn.Linear(64 * 8 * 8, 80), nn.Sigmoid())
-
-        self.output = nn.Sequential(nn.Linear(80, output_units), nn.Sigmoid())
-
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
-
-    def init_weights(self):
-        pass
-
-    def forward(self, x):
-        x = np.dot(x[..., :3], [0.2989, 0.5870, 0.1140])
-        x = x[np.newaxis, :]
-        x = torch.from_numpy(np.array(x))
-        x = x.unsqueeze(0)
-        x = x.type(torch.DoubleTensor)
-
-        x = self.conv1(x)
-        x = self.conv2(x)
-        x = self.conv3(x)
-        x = x.view(-1, 64 * 8 * 8)
-        x = x.reshape(-1)
-        x = self.hidden(x)
-        x = self.output(x)
-        return x
-
-    def update_weights(self, p, p_next):
-        if isinstance(p_next, int):
-            p_next = torch.tensor([p_next], dtype=torch.float64)
-
-        loss = self.loss_fn(p_next, p)
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-        return loss
 
 
 class TDGammon(BaseModel):

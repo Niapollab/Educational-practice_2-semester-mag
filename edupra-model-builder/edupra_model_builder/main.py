@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-from edupra_core.models import TDGammon, TDGammonCNN
+from edupra_core.models import TDGammon
 from edupra_core.path import ensure_exists
 import argparse
 import gym
-import os
-import sys
 
 
 def save_parameters(path: str, **kwargs) -> None:
@@ -48,9 +46,6 @@ def parse_arguments() -> argparse.Namespace:
         "--name", help="Name of the experiment", type=str, default="exp1"
     )
     parser.add_argument(
-        "--type", help="Model type", choices=["cnn", "nn"], type=str, default="nn"
-    )
-    parser.add_argument(
         "--seed", help="Seed used to reproduce results", type=int, default=123
     )
 
@@ -61,34 +56,22 @@ def parse_arguments() -> argparse.Namespace:
 def main() -> None:
     args = parse_arguments()
 
-    is_nn_model = args.type == "nn"
-    need_eligibility = is_nn_model
-    optimizer = None if is_nn_model else True
-
-    ai = (
-        TDGammon(
-            hidden_units=args.hidden_units,
-            lr=args.lr,
-            lamda=args.lamda,
-            init_weights=args.init_weights,
-            seed=args.seed,
-        )
-        if is_nn_model
-        else TDGammonCNN(lr=args.lr, seed=args.seed)
+    ai = TDGammon(
+        hidden_units=args.hidden_units,
+        lr=args.lr,
+        lamda=args.lamda,
+        init_weights=args.init_weights,
+        seed=args.seed,
     )
 
-    env = gym.make(
-        "gym_backgammon:backgammon-v0"
-        if is_nn_model
-        else "gym_backgammon:backgammon-pixel-v0"
-    )
+    env = gym.make("gym_backgammon:backgammon-v0")
 
     if args.model:
         ensure_exists(args.model)
         ai.load(
             checkpoint_path=args.model,
-            optimizer=optimizer,
-            eligibility_traces=need_eligibility,
+            optimizer=None,
+            eligibility_traces=True,
         )
 
     if args.save_path:
@@ -98,7 +81,6 @@ def main() -> None:
             args.save_path,
             save_path=args.save_path,
             command_line_args=args,
-            type=args.type,
             hidden_units=args.hidden_units,
             init_weights=args.init_weights,
             alpha=ai.lr,
@@ -110,8 +92,6 @@ def main() -> None:
             env=env.spec.id,
             restored_model=args.model,
             seed=args.seed,
-            eligibility=need_eligibility,
-            optimizer=optimizer,
             modules=[module for module in ai.modules()],
         )
 
@@ -120,7 +100,7 @@ def main() -> None:
         n_episodes=args.episodes,
         save_path=args.save_path,
         save_step=args.save_step,
-        eligibility=need_eligibility,
+        eligibility=True,
         name_experiment=args.name,
     )
 

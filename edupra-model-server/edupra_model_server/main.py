@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import logging
-from .models import BaseResponse, Request, GameState, Response
+from .models import Request, GameState, Response
 from .state_repositories import RedisStateRepository, DictStateRepository
 from edupra_core.agents import TDAgent, HumanAgent
-from edupra_core.models import TDGammon, TDGammonCNN
+from edupra_core.models import TDGammon
 from edupra_core.path import ensure_exists
 from fastapi import FastAPI, Header, HTTPException
 from gym_backgammon.envs.backgammon import WHITE, BLACK, COLORS
@@ -17,13 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 hidden_units = int(os.environ.get("MODEL_HIDDEN_UNITS", "40"))
-model_type = os.environ.get("MODEL_TYPE", "nn")
-is_nn_model = model_type == "nn"
-ai = (
-    TDGammon(hidden_units=hidden_units, lr=0.1, lamda=None, init_weights=False)
-    if is_nn_model
-    else TDGammonCNN(lr=0.0001)
-)
+ai = TDGammon(hidden_units=hidden_units, lr=0.1, lamda=None, init_weights=False)
 
 
 model_path = os.environ.get("MODEL_PATH")
@@ -49,11 +43,7 @@ app = FastAPI()
 
 def init_state() -> GameState:
     agents = {BLACK: TDAgent(BLACK, net=ai), WHITE: HumanAgent(WHITE)}
-    env = gym.make(
-        "gym_backgammon:backgammon-v0"
-        if is_nn_model
-        else "gym_backgammon:backgammon-pixel-v0"
-    )
+    env = gym.make("gym_backgammon:backgammon-v0")
     return GameState(agents, env)
 
 
