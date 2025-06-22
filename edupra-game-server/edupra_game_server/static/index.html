@@ -7,409 +7,574 @@
     <meta charset="UTF-8">
     <title>Backgammon GUI</title>
     <style>
-        #canvas-container {
-            width: 80%;
-            text-align: center;
-            margin: auto;
+        body {
+            margin: 0;
+            padding: 0;
+            background: #2c3e50;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #ecf0f1;
         }
-        textarea {
-            float: left;
-            position: absolute;
-            width:25%;
-            height: 600px;
-            resize:None;
-            font-size: 10px;
-        }
+
         h1 {
-            width: 100%;
             text-align: center;
-            margin: auto;
+            margin: 20px 0;
+            font-size: 36px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            letter-spacing: 3px;
         }
+
+        #game-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
+            padding: 0 20px;
+        }
+
+        #left-panel, #right-panel {
+            background: rgba(44, 62, 80, 0.8);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            width: 250px;
+            height: 600px;
+        }
+
+        #history {
+            width: 100%;
+            height: 100%;
+            background: #34495e;
+            color: #ecf0f1;
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            box-sizing: border-box;
+        }
+
         #hint {
-            right: 0;
-            position: absolute;
-            text-align: left;
-            width:25%;
-            resize:None;
-            height:600px;
-            overflow:scroll;
-        }
-        li {list-style-type: none;}
-        button {
-            width: 300px;
-            text-align: left;
-            font-size: 15px;
-        }
-        button:hover:enabled { 
-            background: lightgreen; 
-        }
-        
-        textarea {
-            color: black;
+            height: 100%;
+            overflow-y: auto;
         }
 
+        #hint h3 {
+            margin-top: 0;
+            color: #3498db;
+        }
 
+        #hint button {
+            width: 100%;
+            margin: 5px 0;
+            padding: 10px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        #hint button:hover:enabled {
+            background: #2980b9;
+            transform: translateX(5px);
+        }
+
+        #canvas-container {
+            text-align: center;
+        }
+
+        #boardCanvas {
+            border-radius: 10px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+        }
+
+        #controls {
+            margin-top: 20px;
+            background: rgba(44, 62, 80, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        #controls p {
+            margin: 10px 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        #controls label {
+            font-size: 16px;
+            margin-right: 10px;
+        }
+
+        #action-choice {
+            padding: 8px 12px;
+            font-size: 16px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background: #34495e;
+            color: #ecf0f1;
+            margin-right: 10px;
+        }
+
+        #button-execute {
+            padding: 10px 30px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #button-execute:hover:enabled {
+            background: #229954;
+            transform: scale(1.05);
+        }
+
+        #button-execute:disabled {
+            background: #7f8c8d;
+            cursor: not-allowed;
+        }
+
+        li {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
     </style>
 </head>
 
 <body onload="init()">
-    <h1>BACKGAMMON</h1>
-    <textarea id='history' readonly disabled></textarea>
-    
-    <div id='hint'>
-    </div>
-    
-    <div id='canvas-container'>
+    <h1>🎲 BACKGAMMON 🎲</h1>
 
-        <canvas id="boardCanvas" width="700" height="600" style="border:1px solid #000000;"></canvas> 
-        <p>Player: WHITE</p>
-        <label for="action-choice">Choose an action:</label>
-        <input list="actions" id="action-choice" name="action-choice" value="" size="35" maxlength="35" oninput="check_input()"/>
-        <datalist id="actions">
-            <option value="start">
-        </datalist>
-        <button onclick="execute_action()" id='button-execute'>EXECUTE</button>
+    <div id="game-container">
+        <div id="left-panel">
+            <textarea id='history' readonly disabled></textarea>
+        </div>
+
+        <div id='canvas-container'>
+            <canvas id="boardCanvas" width="700" height="600"></canvas>
+
+            <div id="controls">
+                <p>Current Player: <span id="current-player">WHITE</span></p>
+                <label for="action-choice">Choose your move:</label>
+                <input list="actions" id="action-choice" name="action-choice" value="" size="35" maxlength="35" oninput="check_input()"/>
+                <datalist id="actions">
+                    <option value="start">
+                </datalist>
+                <button onclick="execute_action()" id='button-execute'>MAKE MOVE</button>
+            </div>
+        </div>
+
+        <div id="right-panel">
+            <div id='hint'>
+                <h3>Available Moves</h3>
+            </div>
+        </div>
     </div>
 </body>
 
 <script>
+    // Canvas setup
     let c = document.getElementById("boardCanvas");
     let ctx = c.getContext("2d");
     let width = c.width;
     let height = c.height;
-    let border = 50;
-
-    let half_board_width = (width - 4 * border) / 2
-    let half_board_height = (height - 2 * border)
-    let half_board_rigth_start = 3 * border + half_board_width
-
-    // POINTs
-    let point_width = half_board_width / 6
-    let point_heigth = height * 4.5 / 10
+    
+    // Board dimensions
+    const BORDER = 50;
+    const HALF_BOARD_WIDTH = (width - 4 * BORDER) / 2;
+    const HALF_BOARD_HEIGHT = height - 2 * BORDER;
+    const HALF_BOARD_RIGHT_START = 3 * BORDER + HALF_BOARD_WIDTH;
+    
+    // Points dimensions
+    const POINT_WIDTH = HALF_BOARD_WIDTH / 6;
+    const POINT_HEIGHT = height * 4.5 / 10;
+    
+    // Colors
+    const COLORS = {
+        DARK_TRIANGLE: '#8B4513',
+        LIGHT_TRIANGLE: '#DEB887',
+        BOARD: '#654321',
+        BORDER: '#D4AF37',
+        INNER_BOARD: '#2C1810',
+        BOARD_GRADIENT_TOP: '#3d2817',
+        BOARD_GRADIENT_BOTTOM: '#1f120a',
+        BORDER_INNER: '#8B6914',
+        SHADOW: 'rgba(0, 0, 0, 0.5)',
+        CHECKER_SHADOW: 'rgba(0, 0, 0, 0.4)',
+        BORDER_SHADOW: 'rgba(212, 175, 55, 0.5)',
+        TRIANGLE_STROKE: 'rgba(0, 0, 0, 0.3)'
+    };
+    
+    // Checker dimensions
+    const CHECKER_RADIUS = POINT_WIDTH / 2;
+    const MAX_VISIBLE_CHECKERS = 5;
+    
+    // Font settings
     ctx.font = "25px Arial";
 
 
-    let COLOR1 = '#ff704d'
-    let COLOR2 = '#ffeecc'
-
-    // CHECKERS
-    let radius = point_width / 2
-
-
-    function init(){
-        draw()
-        document.getElementById("action-choice").value = ''
-        document.getElementById("history").value = 'LOG\n'
-
-        document.getElementById("hint").innerHTML = 'Hint\n'
-        var node = document.createElement("li"); 
-        var buttonNode = document.createElement('button');
-        buttonNode.innerHTML = 'start';
-        buttonNode.onclick = function() { 
-            document.getElementById("action-choice").value = buttonNode.innerHTML;
-            execute_action()
-        };
-        node.appendChild(buttonNode); 
-        document.getElementById("hint").appendChild(node);
+    function init() {
+        draw();
+        document.getElementById("action-choice").value = '';
+        document.getElementById("history").value = 'LOG\n';
+        
+        resetHint();
+        addActionButton('start');
         document.getElementById("button-execute").disabled = true;
-
+    }
+    
+    function resetHint() {
+        document.getElementById("hint").innerHTML = '<h3>Available Moves</h3>';
+    }
+    
+    function addActionButton(action) {
+        const node = document.createElement("li");
+        const buttonNode = document.createElement('button');
+        buttonNode.innerHTML = action;
+        buttonNode.onclick = function() {
+            document.getElementById("action-choice").value = action;
+            execute_action();
+        };
+        
+        // Animation
+        buttonNode.style.opacity = '0';
+        buttonNode.style.animation = 'fadeIn 0.3s ease forwards';
+        buttonNode.style.animationDelay = (document.getElementById("hint").children.length * 0.05) + 's';
+        
+        node.appendChild(buttonNode);
+        document.getElementById("hint").appendChild(node);
     }
 
-    // https://stackoverflow.com/questions/30022728/perform-action-when-clicking-html5-datalist-option
-    function check_input(){
-        let val = document.getElementById("action-choice").value;
-        let actions = document.getElementById("actions").childNodes;
-        for (let i = 0; i < actions.length; i++) {
-            if (actions[i].value === val) {
-                document.getElementById("button-execute").disabled = false;
-                break;
-            }
-            document.getElementById("button-execute").disabled = true;
-
-        }
+    function check_input() {
+        const val = document.getElementById("action-choice").value;
+        const actions = document.getElementById("actions").childNodes;
+        const isValid = Array.from(actions).some(action => action.value === val);
+        document.getElementById("button-execute").disabled = !isValid;
     }
     function draw() {
-        ctx.strokeStyle = 'black';
+        drawBackground();
+        drawBoardHalves();
+        drawBorders();
+        drawAllPoints();
+    }
+    
+    function drawBackground() {
+        ctx.fillStyle = COLORS.BOARD;
+        ctx.fillRect(0, 0, width, height);
+    }
+    
+    function drawBoardHalves() {
+        const boardGradient = ctx.createLinearGradient(0, BORDER, 0, height - BORDER);
+        boardGradient.addColorStop(0, COLORS.BOARD_GRADIENT_TOP);
+        boardGradient.addColorStop(0.5, COLORS.INNER_BOARD);
+        boardGradient.addColorStop(1, COLORS.BOARD_GRADIENT_BOTTOM);
+        
+        ctx.save();
+        ctx.shadowColor = COLORS.SHADOW;
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetX = 5;
+        ctx.shadowOffsetY = 5;
+        
+        ctx.fillStyle = boardGradient;
+        ctx.fillRect(BORDER, BORDER, HALF_BOARD_WIDTH, HALF_BOARD_HEIGHT);
+        ctx.fillRect(HALF_BOARD_RIGHT_START, BORDER, HALF_BOARD_WIDTH, HALF_BOARD_HEIGHT);
+        
+        ctx.restore();
+    }
+    
+    function drawBorders() {
+        // Center line
+        ctx.save();
+        ctx.strokeStyle = COLORS.BORDER;
+        ctx.lineWidth = 6;
+        ctx.shadowColor = COLORS.BORDER_SHADOW;
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.moveTo(width / 2, BORDER);
+        ctx.lineTo(width / 2, height - BORDER);
+        ctx.stroke();
+        ctx.restore();
+        
+        // Double border frames
+        ctx.save();
+        ctx.strokeStyle = COLORS.BORDER;
+        ctx.lineWidth = 6;
+        ctx.shadowColor = COLORS.BORDER_SHADOW;
+        ctx.shadowBlur = 15;
+        
+        // Outer borders
+        ctx.strokeRect(BORDER - 3, BORDER - 3, HALF_BOARD_WIDTH + 6, HALF_BOARD_HEIGHT + 6);
+        ctx.strokeRect(HALF_BOARD_RIGHT_START - 3, BORDER - 3, HALF_BOARD_WIDTH + 6, HALF_BOARD_HEIGHT + 6);
+        
+        // Inner borders
         ctx.lineWidth = 2;
+        ctx.strokeStyle = COLORS.BORDER_INNER;
+        ctx.strokeRect(BORDER + 2, BORDER + 2, HALF_BOARD_WIDTH - 4, HALF_BOARD_HEIGHT - 4);
+        ctx.strokeRect(HALF_BOARD_RIGHT_START + 2, BORDER + 2, HALF_BOARD_WIDTH - 4, HALF_BOARD_HEIGHT - 4);
+        
+        ctx.restore();
+    }
 
-        // background canvas
-        ctx.fillStyle = "#ffcc99";
-        ctx.fillRect(0, 0, c.width, c.height);
-
-        // LEFT HALF BOARD
-        ctx.fillStyle = "#009933";
-        ctx.fillRect(border, border, half_board_width, half_board_height);
-
-        // RIGHT HALF BOARD
-        ctx.fillStyle = "#009933";
-        ctx.fillRect(half_board_rigth_start, border, half_board_width, half_board_height);
-
-        // LINE in the middle
+    function drawAllPoints() {
+        // Top left (12-17)
+        for (let i = 0; i < 6; i++) {
+            drawPoint(BORDER + i * POINT_WIDTH, BORDER, POINT_HEIGHT, i % 2 === 0, true);
+            drawPointNumber(12 + i, BORDER + i * POINT_WIDTH + 5, BORDER - 15);
+        }
+        
+        // Top right (18-23)
+        for (let i = 0; i < 6; i++) {
+            drawPoint(HALF_BOARD_RIGHT_START + i * POINT_WIDTH, BORDER, POINT_HEIGHT, i % 2 === 0, true);
+            drawPointNumber(18 + i, HALF_BOARD_RIGHT_START + i * POINT_WIDTH + 5, BORDER - 15);
+        }
+        
+        // Bottom left (11-6)
+        for (let i = 0; i < 6; i++) {
+            drawPoint(BORDER + i * POINT_WIDTH, height - BORDER, height - POINT_HEIGHT, i % 2 !== 0, false);
+            const number = 11 - i;
+            const xOffset = number < 10 ? 15 : 5;
+            drawPointNumber(number, BORDER + i * POINT_WIDTH + xOffset, height - BORDER + 35);
+        }
+        
+        // Bottom right (5-0)
+        for (let i = 0; i < 6; i++) {
+            drawPoint(HALF_BOARD_RIGHT_START + i * POINT_WIDTH, height - BORDER, height - POINT_HEIGHT, i % 2 !== 0, false);
+            drawPointNumber(5 - i, HALF_BOARD_RIGHT_START + i * POINT_WIDTH + 15, height - BORDER + 35);
+        }
+    }
+    
+    function drawPoint(x, y1, y2, isDark, isTop) {
+        ctx.save();
+        
+        const gradient = ctx.createLinearGradient(x + POINT_WIDTH / 2, y1, x + POINT_WIDTH / 2, y2);
+        if (isDark) {
+            gradient.addColorStop(0, COLORS.DARK_TRIANGLE);
+            gradient.addColorStop(1, '#6B3410');
+        } else {
+            gradient.addColorStop(0, COLORS.LIGHT_TRIANGLE);
+            gradient.addColorStop(1, '#C9A876');
+        }
+        
         ctx.beginPath();
-        ctx.moveTo(width / 2, 0);
-        ctx.lineTo(width / 2, height);
-        ctx.stroke()
-
-        // BORDER LEFT HALF BOARD
-        ctx.beginPath();
-        ctx.moveTo(border, border);
-        ctx.lineTo(border + half_board_width, border);
-        ctx.lineTo(border + half_board_width, height - border);
-        ctx.lineTo(border, height - border);
-        ctx.lineTo(border, border);
-        ctx.stroke()
-
-        // BORDER RIGHT HALF BOARD
-        ctx.beginPath();
-        ctx.moveTo(half_board_rigth_start, border);
-        ctx.lineTo(half_board_rigth_start + half_board_width, border);
-        ctx.lineTo(half_board_rigth_start + half_board_width, height - border);
-        ctx.lineTo(half_board_rigth_start, height - border);
-        ctx.lineTo(half_board_rigth_start, border);
-        ctx.stroke()
-
-        // TOP LEFT POINTS
-        for (i = 0; i < 6; i++) {
-            ctx.beginPath();
-            ctx.moveTo(border + i * point_width, border);
-            ctx.lineTo(border + i * point_width + (point_width / 2), point_heigth);
-            ctx.lineTo(border + (i + 1) * point_width, border);
-            if (i % 2 == 0) {
-                ctx.fillStyle = COLOR1;
-            } else {
-                ctx.fillStyle = COLOR2;
-            }
-            ctx.fill();
-            ctx.stroke()
-            ctx.fillStyle = 'black';
-            ctx.fillText(12 + i, border + i * point_width + 5, border - 5);
-        }
-
-        // TOP RIGHT POINTS
-        for (i = 0; i < 6; i++) {
-            ctx.beginPath();
-            ctx.moveTo(half_board_rigth_start + i * point_width, border);
-            ctx.lineTo(half_board_rigth_start + i * point_width + (point_width / 2), point_heigth);
-            ctx.lineTo(half_board_rigth_start + (i + 1) * point_width, border);
-            ctx.stroke();
-            if (i % 2 == 0) {
-                ctx.fillStyle = COLOR1;
-            } else {
-                ctx.fillStyle = COLOR2;
-            }
-            ctx.fill();
-            ctx.stroke()
-            ctx.fillStyle = 'black';
-            ctx.fillText(18 + i, half_board_rigth_start + i * point_width + 5, border - 5);
-        }
-
-        // BOTTOM LEFT POINTS
-        for (i = 0; i < 6; i++) {
-            ctx.beginPath();
-            ctx.moveTo(border + i * point_width, height - border);
-            ctx.lineTo(border + i * point_width + (point_width / 2), height - point_heigth);
-            ctx.lineTo(border + (i + 1) * point_width, height - border);
-            ctx.stroke();
-            if (i % 2 == 0) {
-                ctx.fillStyle = COLOR2;
-            } else {
-                ctx.fillStyle = COLOR1;
-            }
-            ctx.fill();
-            ctx.stroke()
-            ctx.fillStyle = 'black';
-            if (11 - i < 10){
-                ctx.fillText(11 - i, border + i * point_width + 15, height - border + 25);
-            } else {
-                ctx.fillText(11 - i, border + i * point_width + 5, height - border + 25);
-            }
-        }
-
-        // BOTTOM RIGHT POINTS
-        for (i = 0; i < 6; i++) {
-            ctx.beginPath();
-            ctx.moveTo(half_board_rigth_start + i * point_width, height - border);
-            ctx.lineTo(half_board_rigth_start + i * point_width + (point_width / 2), height - point_heigth);
-            ctx.lineTo(half_board_rigth_start + (i + 1) * point_width, height - border);
-            if (i % 2 == 0) {
-                ctx.fillStyle = COLOR2;
-            } else {
-                ctx.fillStyle = COLOR1;
-            }
-            ctx.fill();
-            ctx.stroke()
-            ctx.fillStyle = 'black';
-            ctx.fillText(5 - i, half_board_rigth_start + i * point_width + 15, height - border + 25);
-
-        }
+        ctx.moveTo(x, y1);
+        ctx.lineTo(x + POINT_WIDTH / 2, y2);
+        ctx.lineTo(x + POINT_WIDTH, y1);
+        ctx.closePath();
+        
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        
+        ctx.strokeStyle = COLORS.TRIANGLE_STROKE;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        
+        ctx.restore();
+    }
+    
+    function drawPointNumber(number, x, y) {
+        ctx.save();
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.fillStyle = 'black';
+        ctx.fillText(number, x, y);
+        ctx.restore();
     }
 
     function draw_board(board, bar, off) {
-        draw()
+        draw();
         if (board != null) {
             board.forEach((data, point) => {
-                checkers = data[0]
-                player = data[1]
-
+                const checkers = data[0];
+                const player = data[1];
+                
                 if (player != null) {
-                    text_color = 'black'
-                    checkers_color = 'white'
-
-                    if (player == 1) {
-                        text_color = 'white'
-                        checkers_color = 'black'
-                    }
-                    // BOTTOM RIGHT
-                    if (0 <= point && point < 6) {
-                        let coord_start = { 'x': half_board_rigth_start, 'y': height - border }
-                        let shift = coord_start.x + point_width * (5 - point)
-                        for (let i = 0; i < checkers; i++) {
-                            ctx.beginPath();
-                            ctx.arc(shift + radius, coord_start.y - radius - 2 * i * radius, radius, 0, 2 * Math.PI);
-                            ctx.fillStyle = checkers_color;
-                            ctx.fill();
-                            ctx.strokeStyle = text_color;
-                            ctx.stroke()
-                            if (i >= 4) {
-                                ctx.fillStyle = text_color;
-                                ctx.fillText(checkers, shift + radius - 10, coord_start.y - radius - 2 * i * radius + 10);
-                                break;
-                            }
-                        }
-                    }
-
-                    // BOTTOM LEFT
-                    if (6 <= point && point < 12) {
-                        let coord_start = { 'x': border, 'y': height - border }
-                        let shift = coord_start.x + point_width * (11 - point)
-                        for (let i = 0; i < checkers; i++) {
-                            ctx.beginPath();
-                            ctx.arc(shift + radius, coord_start.y - radius - 2 * i * radius, radius, 0, 2 * Math.PI);
-                            ctx.fillStyle = checkers_color;
-                            ctx.fill();
-                            ctx.strokeStyle = text_color;
-                            ctx.stroke()
-                            if (i >= 4) {
-                                ctx.fillStyle = text_color;
-                                ctx.fillText(checkers, shift + radius - 10, coord_start.y - radius - 2 * i * radius + 10);
-                                break;
-                            }
-                        }
-                    }
-
-                    // TOP LEFT
-                    if (12 <= point && point < 18) {
-                        let coord_start = { 'x': border, 'y': border }
-                        let shift = coord_start.x + point_width * (point - 12)
-                        for (let i = 0; i < checkers; i++) {
-                            ctx.beginPath();
-                            ctx.arc(shift + radius, coord_start.y + radius + 2 * i * radius, radius, 0, 2 * Math.PI);
-                            ctx.fillStyle = checkers_color;
-                            ctx.fill();
-                            ctx.strokeStyle = text_color;
-                            ctx.stroke()
-                            if (i >= 4) {
-                                ctx.fillStyle = text_color;
-                                ctx.fillText(checkers, shift + radius - 10, coord_start.y + radius + 2 * i * radius + 10);
-                                break;
-                            }
-                        }
-                    }
-
-                    // TOP RIGHT
-                    if (18 <= point && point < 24) {
-                        let coord_start = { 'x': half_board_rigth_start, 'y': border }
-                        let shift = coord_start.x + point_width * (point - 18)
-                        for (let i = 0; i < checkers; i++) {
-                            ctx.beginPath();
-                            ctx.arc(shift + radius, coord_start.y + radius + 2 * i * radius, radius, 0, 2 * Math.PI);
-                            ctx.fillStyle = checkers_color;
-                            ctx.fill();
-                            ctx.strokeStyle = text_color;
-                            ctx.stroke()
-                            if (i >= 4) {
-                                ctx.fillStyle = text_color;
-                                ctx.fillText(checkers, shift + radius - 10, coord_start.y + radius + 2 * i * radius + 10);
-                                break;
-                            }
-                        }
-                    }
+                    const isBlack = player === 1;
+                    drawCheckersAtPoint(point, checkers, isBlack);
                 }
+            });
+        }
+        draw_bar_off(bar, off);
+    }
+    
+    function drawCheckersAtPoint(point, checkers, isBlack) {
+        const positions = getPointPositions(point);
+        if (!positions) return;
+        
+        for (let i = 0; i < Math.min(checkers, MAX_VISIBLE_CHECKERS); i++) {
+            const x = positions.x;
+            const y = positions.getY(i);
+            
+            drawChecker(x, y, isBlack);
+            
+            if (i === MAX_VISIBLE_CHECKERS - 1 && checkers > MAX_VISIBLE_CHECKERS) {
+                drawCheckerCount(x, y, checkers, isBlack);
+                break;
             }
-        )}
-        draw_bar_off(bar, off)
+        }
+    }
+    
+    function getPointPositions(point) {
+        // Bottom right (0-5)
+        if (point >= 0 && point < 6) {
+            const x = HALF_BOARD_RIGHT_START + POINT_WIDTH * (5 - point) + CHECKER_RADIUS;
+            return {
+                x: x,
+                getY: (i) => height - BORDER - CHECKER_RADIUS - 2 * i * CHECKER_RADIUS
+            };
+        }
+        // Bottom left (6-11)
+        else if (point >= 6 && point < 12) {
+            const x = BORDER + POINT_WIDTH * (11 - point) + CHECKER_RADIUS;
+            return {
+                x: x,
+                getY: (i) => height - BORDER - CHECKER_RADIUS - 2 * i * CHECKER_RADIUS
+            };
+        }
+        // Top left (12-17)
+        else if (point >= 12 && point < 18) {
+            const x = BORDER + POINT_WIDTH * (point - 12) + CHECKER_RADIUS;
+            return {
+                x: x,
+                getY: (i) => BORDER + CHECKER_RADIUS + 2 * i * CHECKER_RADIUS
+            };
+        }
+        // Top right (18-23)
+        else if (point >= 18 && point < 24) {
+            const x = HALF_BOARD_RIGHT_START + POINT_WIDTH * (point - 18) + CHECKER_RADIUS;
+            return {
+                x: x,
+                getY: (i) => BORDER + CHECKER_RADIUS + 2 * i * CHECKER_RADIUS
+            };
+        }
+        return null;
+    }
+    
+    function drawChecker(x, y, isBlack) {
+        ctx.save();
+        
+        // Shadow
+        ctx.shadowColor = COLORS.CHECKER_SHADOW;
+        ctx.shadowBlur = 5;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+        
+        // Main checker
+        ctx.beginPath();
+        ctx.arc(x, y, CHECKER_RADIUS, 0, 2 * Math.PI);
+        
+        // Gradient
+        const gradient = ctx.createRadialGradient(
+            x - CHECKER_RADIUS/3, y - CHECKER_RADIUS/3, 0,
+            x, y, CHECKER_RADIUS
+        );
+        
+        if (isBlack) {
+            gradient.addColorStop(0, '#404040');
+            gradient.addColorStop(0.7, '#202020');
+            gradient.addColorStop(1, '#000000');
+        } else {
+            gradient.addColorStop(0, '#FFFFFF');
+            gradient.addColorStop(0.7, '#F0F0F0');
+            gradient.addColorStop(1, '#D0D0D0');
+        }
+        
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        ctx.strokeStyle = isBlack ? 'white' : 'black';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Highlight
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.arc(x - CHECKER_RADIUS/3, y - CHECKER_RADIUS/3, CHECKER_RADIUS/3, 0, 2 * Math.PI);
+        
+        const highlightGradient = ctx.createRadialGradient(
+            x - CHECKER_RADIUS/3, y - CHECKER_RADIUS/3, 0,
+            x - CHECKER_RADIUS/3, y - CHECKER_RADIUS/3, CHECKER_RADIUS/3
+        );
+        highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
+        highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0.1)');
+        ctx.fillStyle = highlightGradient;
+        ctx.fill();
+        
+        ctx.restore();
+    }
+    
+    function drawCheckerCount(x, y, count, isBlack) {
+        ctx.save();
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.fillStyle = isBlack ? 'white' : 'black';
+        ctx.font = "bold 20px Arial";
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(count, x, y);
+        ctx.font = "25px Arial";
+        ctx.restore();
     }
 
-    function draw_bar_off(bar, off){
-        // BAR
-        let bar_white = bar[0]
-        let bar_black = bar[1]            
-
-        var coord_start = { 'x': width / 2, 'y': border }
-
-        for (let i = 0; i < bar_white; i++) {
-
-            ctx.beginPath();
-            ctx.arc(coord_start.x, coord_start.y + radius + 2 * i * radius, radius, 0, 2 * Math.PI);
-            ctx.fillStyle = 'white';
-            ctx.fill();
-            ctx.strokeStyle = 'black';
-            ctx.stroke()
-            if (i >= 3) {
-                ctx.fillStyle = 'black';
-                ctx.fillText(bar_white, coord_start.x - 8, coord_start.y + radius + 2 * i * radius + 10);
-                break;
-            }
-
-        }
-
-        var coord_start = { 'x': width / 2, 'y': height - border }
+    function draw_bar_off(bar, off) {
+        const [barWhite, barBlack] = bar;
+        const [offWhite, offBlack] = off;
         
-        for (let i = 0; i < bar_black; i++) {
-
-            ctx.beginPath();
-            ctx.arc(coord_start.x, coord_start.y - radius - 2 * i * radius, radius, 0, 2 * Math.PI);
-            ctx.fillStyle = 'black';
-            ctx.fill();
-            ctx.strokeStyle = 'white';
-            ctx.stroke()
-            if (i >= 3) {
-                ctx.fillStyle = 'white';
-                ctx.fillText(bar_black, coord_start.x - 8, coord_start.y - radius - 2 * i * radius + 10);
-                break;
-            }
-
-        }
-
-        // OFF
-        let off_white = off[0]
-        let off_black = off[1]      
-        var coord_start = { 'x': width - border, 'y': border }
-        for (let i = 0; i < off_black; i++) {
-            ctx.beginPath();
-            ctx.arc(coord_start.x + radius, coord_start.y + radius + 2 * i * radius, radius, 0, 2 * Math.PI);
-            ctx.fillStyle = 'black';
-            ctx.fill();
-            ctx.strokeStyle = 'white';
-            ctx.stroke()
-            if (i >= 3) {
-                ctx.fillStyle = 'white';
-                ctx.fillText(off_black, coord_start.x + radius - 15, coord_start.y + radius + 2 * i * radius + 10);
-                break;
-            }
-        }
+        // Draw bar checkers
+        drawBarCheckers(barWhite, width / 2, BORDER, false);
+        drawBarCheckers(barBlack, width / 2, height - BORDER, true);
         
-        var coord_start = { 'x': width - border, 'y': height - border }
-        for (let i = 0; i < off_white; i++) {
-            ctx.beginPath();
-            ctx.arc(coord_start.x + radius, coord_start.y - radius - 2 * i * radius, radius, 0, 2 * Math.PI);
-            ctx.fillStyle = 'white';
-            ctx.fill();
-            ctx.strokeStyle = 'black';
-            ctx.stroke()
-            if (i >= 3) {
-                ctx.fillStyle = 'black';
-                ctx.fillText(off_white, coord_start.x + radius - 10, coord_start.y - radius - 2 * i * radius + 10);
+        // Draw off checkers
+        drawOffCheckers(offBlack, width - BORDER + CHECKER_RADIUS, BORDER, true);
+        drawOffCheckers(offWhite, width - BORDER + CHECKER_RADIUS, height - BORDER, false);
+    }
+    
+    function drawBarCheckers(count, x, startY, isBlack) {
+        const maxVisible = 4;
+        for (let i = 0; i < Math.min(count, maxVisible); i++) {
+            const y = isBlack ? 
+                startY - CHECKER_RADIUS - 2 * i * CHECKER_RADIUS :
+                startY + CHECKER_RADIUS + 2 * i * CHECKER_RADIUS;
+            
+            drawChecker(x, y, isBlack);
+            
+            if (i === maxVisible - 1 && count > maxVisible) {
+                drawCheckerCount(x, y, count, isBlack);
+                break;
+            }
+        }
+    }
+    
+    function drawOffCheckers(count, x, startY, isBlack) {
+        const maxVisible = 4;
+        for (let i = 0; i < Math.min(count, maxVisible); i++) {
+            const y = isBlack ?
+                startY + CHECKER_RADIUS + 2 * i * CHECKER_RADIUS :
+                startY - CHECKER_RADIUS - 2 * i * CHECKER_RADIUS;
+            
+            drawChecker(x, y, isBlack);
+            
+            if (i === maxVisible - 1 && count > maxVisible) {
+                drawCheckerCount(x, y, count, isBlack);
                 break;
             }
         }
@@ -432,72 +597,54 @@
         xhr.send(JSON.stringify(data));
     }
 
-    function update(data){
-        console.log(data['message'])
-
-        actions = data['actions']
-        state = data['state']
-
-        board = state[0]
-        bar = state[1]
-        off = state[2]
+    function update(data) {
+        console.log(data['message']);
         
-        // UPDATE DataList, History and Hint
-        document.getElementById("history").value = document.getElementById("history").value + '\n' +data['message']
-        document.getElementById("action-choice").value = ''
+        const { actions, state } = data;
+        const [board, bar, off] = state;
         
-        // https://stackoverflow.com/questions/17929356/html-datalist-values-from-array-in-javascript
-        // https://stackoverflow.com/questions/37155230/how-to-add-dynamic-lists-in-javascript-not-jquery
-        // https://stackoverflow.com/questions/9170670/how-do-i-set-textarea-scroll-bar-to-bottom-as-a-default
+        // Update history
+        const historyElement = document.getElementById("history");
+        historyElement.value += '\n' + data['message'];
+        historyElement.scrollTop = historyElement.scrollHeight;
         
-        options = ''
-        document.getElementById("hint").innerHTML = 'Hint\n'
+        // Clear input
+        document.getElementById("action-choice").value = '';
+        
+        // Update available actions
+        updateActions(actions);
+        
+        // Update board
+        draw_board(board, bar, off);
+    }
+    
+    function updateActions(actions) {
+        let options = '';
+        resetHint();
+        
         actions.forEach(action => {
-            moves = 'move '
-            if (Array.isArray(action)){
-                action.forEach(move => {
-                    moves += '(' + move.join('/') + ')';
-                    moves += ','
-                });
-                options += '<option value="'+moves.slice(0, -1)+'" />';
-
-                var node = document.createElement("li");  
-                var buttonNode = document.createElement('button');
-                buttonNode.innerHTML = moves.slice(0, -1);
-                buttonNode.onclick = function() { 
-                    document.getElementById("action-choice").value = buttonNode.innerHTML;
-                    execute_action()
-                };
-                node.appendChild(buttonNode); 
-                document.getElementById("hint").appendChild(node); 
-
+            if (Array.isArray(action)) {
+                const moves = formatMoves(action);
+                options += `<option value="${moves}" />`;
+                addActionButton(moves);
             } else {
-                options += '<option value="'+action+'" />';
-
-                var node = document.createElement("li"); 
-                var buttonNode = document.createElement('button');
-                buttonNode.innerHTML = action;
-                buttonNode.onclick = function() { 
-                    document.getElementById("action-choice").value = buttonNode.innerHTML;
-                    execute_action()
-                };
-                node.appendChild(buttonNode); 
-                document.getElementById("hint").appendChild(node);
-            } 
+                options += `<option value="${action}" />`;
+                addActionButton(action);
+            }
         });
-        document.getElementById('actions').innerHTML = options;
         
-        var history = document.getElementById('history');
-        history.scrollTop = history.scrollHeight;
-
-        // UPDATE BOARD
-        draw_board(board, bar, off)
+        document.getElementById('actions').innerHTML = options;
+    }
+    
+    function formatMoves(action) {
+        const moves = action.map(move => `(${move.join('/')})`).join(',');
+        return `move ${moves}`;
     }
 
 
-    let input = document.getElementById("action-choice");
-    input.addEventListener("keyup", function(event) {
-        if (event.keyCode === 13) {
+    // Event listeners
+    document.getElementById("action-choice").addEventListener("keyup", function(event) {
+        if (event.key === "Enter") {
             event.preventDefault();
             document.getElementById("button-execute").click();
         }
