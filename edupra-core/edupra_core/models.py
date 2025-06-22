@@ -6,9 +6,9 @@ from itertools import count
 import numpy as np
 import torch
 import torch.nn as nn
+from gym_backgammon.envs.backgammon import BLACK, WHITE
 
-from .agents import TDAgent, RandomAgent, evaluate_agents
-from gym_backgammon.envs.backgammon import WHITE, BLACK
+from .agents import RandomAgent, TDAgent, evaluate_agents
 
 torch.set_default_tensor_type("torch.DoubleTensor")
 
@@ -205,7 +205,7 @@ class BaseModel(nn.Module):
 
         env.close()
 
-    def compare_with(self, env, n_episodes, other = None):
+    def compare_with(self, env, n_episodes, other=None):
         agents_to_evaluate = {
             WHITE: TDAgent(WHITE, net=self),
             BLACK: TDAgent(BLACK, net=other) if other else RandomAgent(BLACK),
@@ -220,9 +220,7 @@ class TDGammonCNN(BaseModel):
         self.loss_fn = torch.nn.MSELoss(reduction="sum")
 
         self.conv1 = nn.Sequential(
-            nn.Conv2d(
-                in_channels=1, out_channels=32, kernel_size=8, stride=4
-            ),
+            nn.Conv2d(in_channels=1, out_channels=32, kernel_size=8, stride=4),
             nn.BatchNorm2d(32),
             nn.ReLU(),
         )

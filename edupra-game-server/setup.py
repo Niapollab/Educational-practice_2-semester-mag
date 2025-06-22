@@ -18,7 +18,5 @@ setup(
     install_requires=get_requirements(),
     python_requires="~= 3.6",
     options={"bdist_wheel": {"plat_name": "any"}},
-    entry_points={
-        "console_scripts": ["edupra-game=edupra_game_server.main:main"]
-    },
+    entry_points={"console_scripts": ["edupra-game=edupra_game_server.main:main"]},
 )

@@ -73,7 +73,7 @@ def handle_start(uid: str) -> Response:
         agent_color, state.first_roll, *_ = state.env.reset()
         state.agent = state.agents[agent_color]
 
-        assert(state.first_roll is not None and state.agent is not None)
+        assert state.first_roll is not None and state.agent is not None
 
         if agent_color == WHITE:
             message += f"{COLORS[state.agent.color]} Starts first | Roll={(abs(state.first_roll[0]), abs(state.first_roll[1]))} | Run 'move (src/target)'\n"
@@ -104,7 +104,7 @@ def handle_start(uid: str) -> Response:
 
 def handle_roll(uid: str) -> Response:
     state = state_repository[uid]
-    assert(state.agent is not None)
+    assert state.agent is not None
 
     message = ""
     commands = []
@@ -124,7 +124,7 @@ def handle_roll(uid: str) -> Response:
         commands.append("start")
     else:
         state.roll = state.agent.roll_dice()
-        assert(state.roll is not None)
+        assert state.roll is not None
 
         message += f"{COLORS[state.agent.color]} | Roll={(abs(state.roll[0]), abs(state.roll[1]))} | Run 'move (src/target)'\n"
         actions = state.env.get_valid_actions(state.roll)
@@ -160,7 +160,7 @@ def handle_roll(uid: str) -> Response:
 
 def handle_move(uid: str, command: str) -> Response:
     state = state_repository[uid]
-    assert(state is not None)
+    assert state is not None
 
     message = ""
     commands = []
@@ -206,7 +206,7 @@ def handle_move(uid: str, command: str) -> Response:
                     f"Illegal move | Roll={(abs(state.roll[0]), abs(state.roll[1]))}\n"
                 )
             else:
-                assert(state.agent is not None)
+                assert state.agent is not None
                 message += f"{COLORS[state.agent.color]} | Roll={(abs(state.roll[0]), abs(state.roll[1]))} | Action={action}\n"
 
                 *_, done, _ = state.env.step(action)

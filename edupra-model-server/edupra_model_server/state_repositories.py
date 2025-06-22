@@ -51,7 +51,7 @@ class RedisStateRepository(StateRepository):
     def __contains__(self, uid: str) -> bool:
         return self._client.exists(uid)
 
-    def __enter__(self) -> 'RedisStateRepository':
+    def __enter__(self) -> "RedisStateRepository":
         return self
 
     def __exit__(self, *_) -> None:

@@ -11,19 +11,19 @@ def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Edupra model builder")
 
     parser.add_argument(
-        '-f', "--first", help="First model path", type=Path, default=None
+        "-f", "--first", help="First model path", type=Path, default=None
     )
     parser.add_argument(
-        '-s', "--second", help="Second model path", type=Path, default=None
+        "-s", "--second", help="Second model path", type=Path, default=None
     )
     parser.add_argument(
-        '-e', "--episodes", help="Number of episodes/games", type=int, default=200000
+        "-e", "--episodes", help="Number of episodes/games", type=int, default=200000
     )
     parser.add_argument(
-        '-h1', help="Number of HIDDEN_UNITS for the first model", type=int, default=40
+        "-h1", help="Number of HIDDEN_UNITS for the first model", type=int, default=40
     )
     parser.add_argument(
-        '-h2', help="Number of HIDDEN_UNITS for the second model", type=int, default=40
+        "-h2", help="Number of HIDDEN_UNITS for the second model", type=int, default=40
     )
 
     args, *_ = parser.parse_known_args()
@@ -34,7 +34,11 @@ def main() -> None:
     args = parse_arguments()
 
     first = TDGammon(hidden_units=args.h1, lr=0.1, lamda=None, init_weights=False)
-    second = TDGammon(hidden_units=args.h2, lr=0.1, lamda=None, init_weights=False) if args.second else None
+    second = (
+        TDGammon(hidden_units=args.h2, lr=0.1, lamda=None, init_weights=False)
+        if args.second
+        else None
+    )
 
     env = gym.make("gym_backgammon:backgammon-v0")
 
@@ -53,11 +57,7 @@ def main() -> None:
             eligibility_traces=True,
         )
 
-    first.compare_with(
-        env=env,
-        n_episodes=args.episodes,
-        other=second
-    )
+    first.compare_with(env=env, n_episodes=args.episodes, other=second)
     env.close()
 
 
