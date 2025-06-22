@@ -73,14 +73,15 @@ def handle_start(uid: str) -> Response:
         agent_color, state.first_roll, *_ = state.env.reset()
         state.agent = state.agents[agent_color]
 
+        assert(state.first_roll is not None and state.agent is not None)
+
         if agent_color == WHITE:
-            message += f"{COLORS[state.agent.color]} Starts first | Roll={(abs(state.first_roll[0]), abs(state.first_roll[1]))} | Run 'move (src/target)'\n"  # type: ignore
+            message += f"{COLORS[state.agent.color]} Starts first | Roll={(abs(state.first_roll[0]), abs(state.first_roll[1]))} | Run 'move (src/target)'\n"
             commands.extend(state.env.get_valid_actions(state.first_roll))
             state.roll = state.first_roll
-
         else:
             opponent = state.agents[agent_color]
-            message += f"{COLORS[opponent.color]} Starts first | Roll={(abs(state.first_roll[0]), abs(state.first_roll[1]))}\n"  # type: ignore
+            message += f"{COLORS[opponent.color]} Starts first | Roll={(abs(state.first_roll[0]), abs(state.first_roll[1]))}\n"
 
             if state.first_roll:
                 roll = state.first_roll
@@ -103,6 +104,7 @@ def handle_start(uid: str) -> Response:
 
 def handle_roll(uid: str) -> Response:
     state = state_repository[uid]
+    assert(state.agent is not None)
 
     message = ""
     commands = []
@@ -114,18 +116,17 @@ def handle_roll(uid: str) -> Response:
             commands.append("start")
         else:
             commands.extend(list(actions))
-
     elif state.game_finished:
         message += "The game is finished. Type 'Start' to start a new game\n"
         commands.append("start")
-
     elif not state.game_started:
         message += "The game is not started. Type 'start' to start a new game\n"
         commands.append("start")
-
     else:
-        state.roll = state.agent.roll_dice()  # type: ignore
-        message += f"{COLORS[state.agent.color]} | Roll={(abs(state.roll[0]), abs(state.roll[1]))} | Run 'move (src/target)'\n"  # type: ignore
+        state.roll = state.agent.roll_dice()
+        assert(state.roll is not None)
+
+        message += f"{COLORS[state.agent.color]} | Roll={(abs(state.roll[0]), abs(state.roll[1]))} | Run 'move (src/target)'\n"
         actions = state.env.get_valid_actions(state.roll)
         commands.extend(list(actions))
 
@@ -159,6 +160,7 @@ def handle_roll(uid: str) -> Response:
 
 def handle_move(uid: str, command: str) -> Response:
     state = state_repository[uid]
+    assert(state is not None)
 
     message = ""
     commands = []
@@ -166,11 +168,9 @@ def handle_move(uid: str, command: str) -> Response:
     if state.roll is None:
         message += "You must roll the dice first\n"
         commands = state.last_commands
-
     elif state.game_finished:
         message += "The game is finished. Type 'new game' to start a new game\n"
         commands.append("new game")
-
     else:
         try:
             action = command.split()[1]
@@ -206,7 +206,9 @@ def handle_move(uid: str, command: str) -> Response:
                     f"Illegal move | Roll={(abs(state.roll[0]), abs(state.roll[1]))}\n"
                 )
             else:
-                message += f"{COLORS[state.agent.color]} | Roll={(abs(state.roll[0]), abs(state.roll[1]))} | Action={action}\n"  # type: ignore
+                assert(state.agent is not None)
+                message += f"{COLORS[state.agent.color]} | Roll={(abs(state.roll[0]), abs(state.roll[1]))} | Action={action}\n"
+
                 *_, done, _ = state.env.step(action)
 
                 if done:
@@ -214,7 +216,6 @@ def handle_move(uid: str, command: str) -> Response:
                     message += f"Game Finished!!! {COLORS[winner]} wins\n"
                     commands.append("new game")
                     state.game_finished = True
-
                 else:
                     agent_color = state.env.get_opponent_agent()
                     opponent = state.agents[agent_color]
@@ -233,7 +234,6 @@ def handle_move(uid: str, command: str) -> Response:
                         message += f"Game Finished!!! {COLORS[winner]} wins\n"
                         commands.append("new game")
                         state.game_finished = True
-
                     else:
                         commands.extend(["roll", "new game"])
                         agent_color = state.env.get_opponent_agent()

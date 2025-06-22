@@ -17,7 +17,7 @@ class BaseModel(nn.Module):
     def __init__(self, lr, lamda, seed=123):
         super(BaseModel, self).__init__()
         self.lr = lr
-        self.lamda = lamda  # trace-decay parameter
+        self.lamda = lamda
         self.start_episode = 0
 
         self.eligibility_traces = None
@@ -222,7 +222,7 @@ class TDGammonCNN(BaseModel):
         self.conv1 = nn.Sequential(
             nn.Conv2d(
                 in_channels=1, out_channels=32, kernel_size=8, stride=4
-            ),  # CHANNEL it was 3
+            ),
             nn.BatchNorm2d(32),
             nn.ReLU(),
         )
@@ -249,7 +249,6 @@ class TDGammonCNN(BaseModel):
         pass
 
     def forward(self, x):
-        # https://stackoverflow.com/questions/12201577/how-can-i-convert-an-rgb-image-into-grayscale-in-python
         x = np.dot(x[..., :3], [0.2989, 0.5870, 0.1140])
         x = x[np.newaxis, :]
         x = torch.from_numpy(np.array(x))
@@ -290,17 +289,6 @@ class TDGammon(BaseModel):
         super(TDGammon, self).__init__(lr, lamda, seed=seed)
 
         self.hidden = nn.Sequential(nn.Linear(input_units, hidden_units), nn.Sigmoid())
-
-        # self.hidden2 = nn.Sequential(
-        #     nn.Linear(hidden_units, hidden_units),
-        #     nn.Sigmoid()
-        # )
-
-        # self.hidden3 = nn.Sequential(
-        #     nn.Linear(hidden_units, hidden_units),
-        #     nn.Sigmoid()
-        # )
-
         self.output = nn.Sequential(nn.Linear(hidden_units, output_units), nn.Sigmoid())
 
         if init_weights:
@@ -313,31 +301,24 @@ class TDGammon(BaseModel):
     def forward(self, x):
         x = torch.from_numpy(np.array(x))
         x = self.hidden(x)
-        # x = self.hidden2(x)
-        # x = self.hidden3(x)
         x = self.output(x)
         return x
 
     def update_weights(self, p, p_next):
-        # reset the gradients
         self.zero_grad()
 
-        # compute the derivative of p w.r.t. the parameters
         p.backward()
 
         with torch.no_grad():
             td_error = p_next - p
 
-            # get the parameters of the model
             parameters = list(self.parameters())
 
             for i, weights in enumerate(parameters):
-                # z <- gamma * lambda * z + (grad w w.r.t P_t)
                 self.eligibility_traces[i] = (
                     self.lamda * self.eligibility_traces[i] + weights.grad
                 )
 
-                # w <- w + alpha * td_error * z
                 new_weights = weights + self.lr * td_error * self.eligibility_traces[i]
                 weights.copy_(new_weights)
 

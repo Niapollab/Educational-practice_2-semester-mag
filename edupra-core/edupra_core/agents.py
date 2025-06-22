@@ -9,9 +9,6 @@ from gym_backgammon.envs.backgammon import WHITE, BLACK, COLORS
 random.seed(0)
 
 
-# AGENT ============================================================================================
-
-
 class Agent:
     def __init__(self, color):
         self.color = color
@@ -28,9 +25,6 @@ class Agent:
         raise NotImplementedError
 
 
-# RANDOM AGENT =======================================================================================
-
-
 class RandomAgent(Agent):
     def __init__(self, color):
         super().__init__(color)
@@ -40,9 +34,6 @@ class RandomAgent(Agent):
         return choice(list(actions)) if actions else None
 
 
-# HUMAN AGENT =======================================================================================
-
-
 class HumanAgent(Agent):
     def __init__(self, color):
         super().__init__(color)
@@ -50,9 +41,6 @@ class HumanAgent(Agent):
 
     def choose_best_action(self, actions=None, env=None):
         pass
-
-
-# TD-GAMMON AGENT =====================================================================================
 
 
 class TDAgent(Agent):
@@ -70,17 +58,12 @@ class TDAgent(Agent):
             env.counter = 0
             state = env.game.save_state()
 
-            # Iterate over all the legal moves and pick the best action
             for i, action in enumerate(actions):
                 observation, reward, done, info = env.step(action)
                 values[i] = self.net(observation)
 
-                # restore the board and other variables (undo the action)
                 env.game.restore_state(state)
 
-            # practical-issues-in-temporal-difference-learning, pag.3
-            # ... the network's output P_t is an estimate of White's probability of winning from board position x_t.
-            # ... the move which is selected at each time step is the move which maximizes P_t when White is to play and minimizes P_t when Black is to play.
             best_action_index = (
                 int(np.argmax(values))
                 if self.color == WHITE
@@ -90,9 +73,6 @@ class TDAgent(Agent):
             env.counter = tmp_counter
 
         return best_action
-
-
-# TD-GAMMON AGENT (play against gnubg) ================================================================
 
 
 class TDAgentGNU(TDAgent):
@@ -133,21 +113,12 @@ class TDAgentGNU(TDAgent):
         return best_action
 
     def handle_opponent_move(self, gnubg):
-        # Once I roll the dice, 2 possible situations can happen:
-        # 1) I can move (the value gnubg.roll is not None)
-        # 2) I cannot move, so my opponent rolls the dice and makes its move, and eventually ask for doubling, so I have to roll the dice again
-
-        # One way to distinguish between the above cases, is to check the color of the player that performs the last move in gnubg:
-        # - if the player's color is the same as the TD Agent, it means I can send the 'move' command (no other moves have been performed after the 'roll' command) - case 1);
-        # - if the player's color is not the same as the TD Agent, this means that the last move performed after the 'roll' is not of the TD agent - case 2)
         previous_agent = gnubg.agent
-        if previous_agent == self.color:  # case 1)
+        if previous_agent == self.color:
             return gnubg
-        else:  # case 2)
+        else:
             while previous_agent != self.color and gnubg.winner is None:
-                # check if my opponent asks for doubling
                 if gnubg.double:
-                    # default action if the opponent asks for doubling is 'take'
                     gnubg = self.gnubg_interface.send_command("take")
                 else:
                     gnubg = self.gnubg_interface.send_command("roll")
