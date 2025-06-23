@@ -4,16 +4,15 @@ import time
 from itertools import count
 
 import numpy as np
-import torch
-import torch.nn as nn
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
 from gym_backgammon.envs.backgammon import BLACK, WHITE
 
 from .agents import RandomAgent, TDAgent, evaluate_agents
 
-torch.set_default_tensor_type("torch.DoubleTensor")
 
-
-class BaseModel(nn.Module):
+class BaseModel(keras.Model):
     def __init__(self, lr, lamda, seed=123):
         super(BaseModel, self).__init__()
         self.lr = lr
@@ -23,7 +22,7 @@ class BaseModel(nn.Module):
         self.eligibility_traces = None
         self.optimizer = None
 
-        torch.manual_seed(seed)
+        tf.random.set_seed(seed)
         random.seed(seed)
 
     def update_weights(self, p, p_next):
@@ -37,8 +36,8 @@ class BaseModel(nn.Module):
 
     def init_eligibility_traces(self):
         self.eligibility_traces = [
-            torch.zeros(weights.shape, requires_grad=False)
-            for weights in list(self.parameters())
+            tf.zeros(weights.shape)
+            for weights in self.trainable_weights
         ]
 
     def checkpoint(self, checkpoint_path, step, name_experiment):
@@ -47,29 +46,24 @@ class BaseModel(nn.Module):
             datetime.datetime.now().strftime("%Y%m%d_%H%M_%S_%f"),
             step + 1,
         )
-        torch.save(
-            {
+        self.save_weights(path)
+        with open(path + '_metadata.pkl', 'wb') as f:
+            import pickle
+            pickle.dump({
                 "step": step + 1,
-                "model_state_dict": self.state_dict(),
-                "eligibility": self.eligibility_traces
-                if self.eligibility_traces
-                else [],
-            },
-            path,
-        )
+                "eligibility": self.eligibility_traces if self.eligibility_traces else [],
+            }, f)
         print("\nCheckpoint saved: {}".format(path))
 
     def load(self, checkpoint_path, optimizer=None, eligibility_traces=None):
-        checkpoint = torch.load(checkpoint_path)
+        import pickle
+        self.load_weights(checkpoint_path)
+        with open(checkpoint_path + '_metadata.pkl', 'rb') as f:
+            checkpoint = pickle.load(f)
         self.start_episode = checkpoint["step"]
-
-        self.load_state_dict(checkpoint["model_state_dict"])
 
         if eligibility_traces is not None:
             self.eligibility_traces = checkpoint["eligibility"]
-
-        if optimizer is not None:
-            self.optimizer.load_state_dict(checkpoint["optimizer"])
 
     def train_agent(
         self,
@@ -226,38 +220,49 @@ class TDGammon(BaseModel):
     ):
         super(TDGammon, self).__init__(lr, lamda, seed=seed)
 
-        self.hidden = nn.Sequential(nn.Linear(input_units, hidden_units), nn.Sigmoid())
-        self.output = nn.Sequential(nn.Linear(hidden_units, output_units), nn.Sigmoid())
+        tf.random.set_seed(seed)
+
+        self.hidden = layers.Dense(hidden_units, activation='sigmoid')
+        self.output_layer = layers.Dense(output_units, activation='sigmoid')
+
+        # Build model
+        self.build((None, input_units))
 
         if init_weights:
             self.init_weights()
 
     def init_weights(self):
-        for p in self.parameters():
-            nn.init.zeros_(p)
+        for layer in self.layers:
+            if hasattr(layer, 'kernel_initializer'):
+                layer.kernel.assign(tf.zeros_like(layer.kernel))
+                if layer.use_bias:
+                    layer.bias.assign(tf.zeros_like(layer.bias))
+
+    def call(self, inputs):
+        return self.forward(inputs)
 
     def forward(self, x):
-        x = torch.from_numpy(np.array(x))
+        x = tf.convert_to_tensor(np.array(x), dtype=tf.float32)
         x = self.hidden(x)
-        x = self.output(x)
+        x = self.output_layer(x)
         return x
 
     def update_weights(self, p, p_next):
-        self.zero_grad()
+        with tf.GradientTape() as tape:
+            tape.watch(p)
+            loss = p
 
-        p.backward()
+        gradients = tape.gradient(loss, self.trainable_weights)
 
-        with torch.no_grad():
-            td_error = p_next - p
+        td_error = p_next - p
 
-            parameters = list(self.parameters())
-
-            for i, weights in enumerate(parameters):
+        for i, (weights, grad) in enumerate(zip(self.trainable_weights, gradients)):
+            if grad is not None:
                 self.eligibility_traces[i] = (
-                    self.lamda * self.eligibility_traces[i] + weights.grad
+                    self.lamda * self.eligibility_traces[i] + grad
                 )
 
                 new_weights = weights + self.lr * td_error * self.eligibility_traces[i]
-                weights.copy_(new_weights)
+                weights.assign(new_weights)
 
         return td_error
